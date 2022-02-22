@@ -2,7 +2,7 @@
 <feed xmlns="http://www.w3.org/2005/Atom">
     <id>https://CaoCan888.github.io</id>
     <title>Gridea</title>
-    <updated>2022-01-06T08:05:05.622Z</updated>
+    <updated>2022-02-22T08:08:45.141Z</updated>
     <generator>https://github.com/jpmonette/feed</generator>
     <link rel="alternate" href="https://CaoCan888.github.io"/>
     <link rel="self" href="https://CaoCan888.github.io/atom.xml"/>
@@ -10,6 +10,383 @@
     <logo>https://CaoCan888.github.io/images/avatar.png</logo>
     <icon>https://CaoCan888.github.io/favicon.ico</icon>
     <rights>All rights reserved 2022, Gridea</rights>
+    <entry>
+        <title type="html"><![CDATA[## 数据库配置  ### ]]></title>
+        <id>https://CaoCan888.github.io/post/shu-ju-ku-pei-zhi/</id>
+        <link href="https://CaoCan888.github.io/post/shu-ju-ku-pei-zhi/">
+        </link>
+        <updated>2022-01-14T08:48:10.000Z</updated>
+        <content type="html"><![CDATA[<h2 id="数据库配置">数据库配置</h2>
+<h3 id="解压">解压</h3>
+<pre><code>tar -xvf mysql-5.7.26-linux-glibc2.12-x86_64.tar 
+</code></pre>
+<figure data-type="image" tabindex="1"><img src="https://img-blog.csdnimg.cn/20190624183815169.png" alt="img" loading="lazy"></figure>
+<h3 id="再移动并重命名一下">再移动并重命名一下</h3>
+<pre><code>mv mysql-5.7.26-linux-glibc2.12-x86_64 /usr/local/mysql
+</code></pre>
+<figure data-type="image" tabindex="2"><img src="https://img-blog.csdnimg.cn/20190625103655295.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzM3NTk4MDEx,size_16,color_FFFFFF,t_70" alt="img" loading="lazy"></figure>
+<h3 id="创建mysql用户组和用户并修改权限">创建mysql用户组和用户并修改权限</h3>
+<pre><code>groupadd mysql
+useradd -r -g mysql mysql
+</code></pre>
+<h3 id="创建数据目录并赋予权限">创建数据目录并赋予权限</h3>
+<pre><code>mkdir -p  /data/mysql              #创建目录
+chown mysql:mysql -R /data/mysql   #赋予权限
+</code></pre>
+<figure data-type="image" tabindex="3"><img src="https://img-blog.csdnimg.cn/20190625104034574.png" alt="img" loading="lazy"></figure>
+<h3 id="配置mycnf">配置my.cnf</h3>
+<pre><code>vim /etc/my.cnf
+</code></pre>
+<h4 id="内容如下">内容如下</h4>
+<pre><code>[mysqld]
+bind-address=0.0.0.0
+port=3306
+user=mysql
+basedir=/usr/local/mysql
+datadir=/data/mysql
+socket=/tmp/mysql.sock
+log-error=/data/mysql/mysql.err
+pid-file=/data/mysql/mysql.pid
+#character config
+character_set_server=utf8mb4
+symbolic-links=0
+explicit_defaults_for_timestamp=true
+</code></pre>
+<figure data-type="image" tabindex="4"><img src="https://img-blog.csdnimg.cn/20190625104818249.png?x-oss-process=image/watermark,type_ZmFuZ3poZW5naGVpdGk,shadow_10,text_aHR0cHM6Ly9ibG9nLmNzZG4ubmV0L3FxXzM3NTk4MDEx,size_16,color_FFFFFF,t_70" alt="img" loading="lazy"></figure>
+<h3 id="初始化数据库">初始化数据库</h3>
+<h4 id="进入mysql的bin目录">进入mysql的bin目录</h4>
+<pre><code>cd /usr/local/mysql/bin/
+</code></pre>
+<h4 id="初始化">初始化</h4>
+<pre><code>./mysqld --defaults-file=/etc/my.cnf --basedir=/usr/local/mysql/ --datadir=/data/mysql/ --user=mysql --initialize
+</code></pre>
+<h4 id="查看密码">查看密码</h4>
+<pre><code>cat /data/mysql/mysql.err
+</code></pre>
+<figure data-type="image" tabindex="5"><img src="https://img-blog.csdnimg.cn/20190625105235465.png" alt="img" loading="lazy"></figure>
+<h4 id="启动mysql并更改root-密码">启动mysql，并更改root 密码</h4>
+<p>先将mysql.server放置到/etc/init.d/mysql中</p>
+<pre><code>cp /usr/local/mysql/support-files/mysql.server /etc/init.d/mysql
+</code></pre>
+<p>启动！！！</p>
+<pre><code>service mysql start
+
+ps -ef|grep mysql
+</code></pre>
+<figure data-type="image" tabindex="6"><img src="https://img-blog.csdnimg.cn/20190625105632551.png" alt="img" loading="lazy"></figure>
+<p>到这里说明mysql已经安装成功了！！</p>
+<h4 id="下面修改密码">下面修改密码</h4>
+<p>首先登录mysql，前面的那个是随机生成的。</p>
+<pre><code>./mysql -u root -p   #bin目录下
+</code></pre>
+<p>再执行下面三步操作，然后重新登录。</p>
+<pre><code>SET PASSWORD = PASSWORD('123456');
+ALTER USER 'root'@'localhost' PASSWORD EXPIRE NEVER;
+FLUSH PRIVILEGES;                                
+</code></pre>
+<p>这时候你如果使用远程连接……你会发现你无法连接。</p>
+<p>这里主要执行下面三个命令(先登录数据库)</p>
+<pre><code>use mysql                                            #访问mysql库
+update user set host = '%' where user = 'root';      #使root能再任何host访问
+FLUSH PRIVILEGES;                                    #刷新
+</code></pre>
+<p>如果不希望每次都到bin目录下使用mysql命令则执行以下命令</p>
+<pre><code>ln -s  /usr/local/mysql/bin/mysql    /usr/bin
+</code></pre>
+<h1 id="开通防火墙">开通防火墙</h1>
+<h2 id="防火墙firewall">防火墙Firewall</h2>
+<ul>
+<li>开启防火墙：</li>
+</ul>
+<pre><code>systemctl start firewalld
+复制代码
+</code></pre>
+<ul>
+<li>关闭防火墙：</li>
+</ul>
+<pre><code>systemctl stop firewalld
+复制代码
+</code></pre>
+<ul>
+<li>查看防火墙状态：</li>
+</ul>
+<pre><code>systemctl status firewalld
+复制代码
+</code></pre>
+<ul>
+<li>设置开机启动：</li>
+</ul>
+<pre><code>systemctl enable firewalld
+复制代码
+</code></pre>
+<ul>
+<li>禁用开机启动：</li>
+</ul>
+<pre><code>systemctl disable firewalld
+复制代码
+</code></pre>
+<ul>
+<li>重启防火墙：</li>
+</ul>
+<pre><code>firewall-cmd --reload
+或者
+systemctl restart firewalld.service
+
+复制代码
+</code></pre>
+<ul>
+<li>开放端口（修改后需要重启防火墙方可生效）：</li>
+</ul>
+<pre><code>firewall-cmd --zone=public --add-port=3306/tcp --permanent
+复制代码
+</code></pre>
+<figure data-type="image" tabindex="7"><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/6/13/16b51180ea020d4a~tplv-t2oaga2asx-watermark.awebp" alt="展示图片" loading="lazy"></figure>
+<ul>
+<li>查看开放的端口：</li>
+</ul>
+<pre><code>firewall-cmd --list-ports
+复制代码
+</code></pre>
+<figure data-type="image" tabindex="8"><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/6/13/16b51180ea2ab29f~tplv-t2oaga2asx-watermark.awebp" alt="展示图片" loading="lazy"></figure>
+<ul>
+<li>关闭端口：</li>
+</ul>
+<pre><code>firewall-cmd --zone=public --remove-port=8080/tcp --permanent
+</code></pre>
+<h2 id="iptables">Iptables</h2>
+<h3 id="安装">安装</h3>
+<blockquote>
+<p>由于CenterOS7.0以上版本并没有预装Iptables,我们需要自行装。</p>
+</blockquote>
+<ul>
+<li>
+<p>安装前先关闭firewall防火墙</p>
+<figure data-type="image" tabindex="9"><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/6/13/16b51180ea6aae51~tplv-t2oaga2asx-watermark.awebp" alt="展示图片" loading="lazy"></figure>
+</li>
+<li>
+<p>安装iptables:</p>
+</li>
+</ul>
+<pre><code>yum install iptables
+复制代码
+</code></pre>
+<ul>
+<li>安装iptables-services:</li>
+</ul>
+<pre><code>yum install iptables-services
+复制代码
+</code></pre>
+<h3 id="使用">使用</h3>
+<ul>
+<li>开启防火墙：</li>
+</ul>
+<pre><code>systemctl start iptables.service
+复制代码
+</code></pre>
+<figure data-type="image" tabindex="10"><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/6/13/16b51180ea61e932~tplv-t2oaga2asx-watermark.awebp" alt="展示图片" loading="lazy"></figure>
+<ul>
+<li>关闭防火墙：</li>
+</ul>
+<pre><code>systemctl stop iptables.service
+复制代码
+</code></pre>
+<ul>
+<li>查看防火墙状态：</li>
+</ul>
+<pre><code>systemctl status iptables.service
+复制代码
+</code></pre>
+<ul>
+<li>设置开机启动：</li>
+</ul>
+<pre><code>systemctl enable iptables.service
+复制代码
+</code></pre>
+<ul>
+<li>禁用开机启动：</li>
+</ul>
+<pre><code>systemctl disable iptables.service
+复制代码
+</code></pre>
+<ul>
+<li>查看filter表的几条链规则(INPUT链可以看出开放了哪些端口)：</li>
+</ul>
+<pre><code>iptables -L -n
+复制代码
+</code></pre>
+<figure data-type="image" tabindex="11"><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/6/13/16b51180ea597ac9~tplv-t2oaga2asx-watermark.awebp" alt="展示图片" loading="lazy"></figure>
+<ul>
+<li>查看NAT表的链规则：</li>
+</ul>
+<pre><code>iptables -t nat -L -n
+复制代码
+</code></pre>
+<figure data-type="image" tabindex="12"><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/6/13/16b511810ad4af70~tplv-t2oaga2asx-watermark.awebp" alt="展示图片" loading="lazy"></figure>
+<ul>
+<li>清除防火墙所有规则：</li>
+</ul>
+<pre><code>iptables -F
+复制代码
+iptables -X
+复制代码
+iptables -Z
+复制代码
+</code></pre>
+<ul>
+<li>给INPUT链添加规则（开放8080端口）：</li>
+</ul>
+<pre><code>iptables -I INPUT -p tcp --dport 8080 -j ACCEPT
+复制代码
+</code></pre>
+<figure data-type="image" tabindex="13"><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/6/13/16b511810ae98aaf~tplv-t2oaga2asx-watermark.awebp" alt="展示图片" loading="lazy"></figure>
+<ul>
+<li>查找规则所在行号：</li>
+</ul>
+<pre><code>iptables -L INPUT --line-numbers -n
+复制代码
+</code></pre>
+<figure data-type="image" tabindex="14"><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/6/13/16b511810aeee047~tplv-t2oaga2asx-watermark.awebp" alt="展示图片" loading="lazy"></figure>
+<ul>
+<li>根据行号删除过滤规则（关闭8080端口）：</li>
+</ul>
+<pre><code>iptables -D INPUT 1
+复制代码
+</code></pre>
+<figure data-type="image" tabindex="15"><img src="https://p1-jj.byteimg.com/tos-cn-i-t2oaga2asx/gold-user-assets/2019/6/13/16b511810fc14ec7~tplv-t2oaga2asx-watermark.awebp" alt="展示图片" loading="lazy"></figure>
+]]></content>
+    </entry>
+    <entry>
+        <title type="html"><![CDATA[Mysql 主从配置]]></title>
+        <id>https://CaoCan888.github.io/post/mysql-zhu-cong-pei-zhi/</id>
+        <link href="https://CaoCan888.github.io/post/mysql-zhu-cong-pei-zhi/">
+        </link>
+        <updated>2022-01-14T08:41:10.000Z</updated>
+        <content type="html"><![CDATA[<p><strong>1.集群环境如下：</strong></p>
+<figure data-type="image" tabindex="1"><img src="C:%5CUsers%5Cxforce%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220107143424229.png" alt="image-20220107143424229" loading="lazy"></figure>
+<p><strong>2.mysql数据安装</strong></p>
+<p>自行安装</p>
+<p><strong>3.Master(51)节点配置</strong></p>
+<p><em>(1) 修改my.cnf文件，在[mysqld]加入下面的内容：</em></p>
+<pre><code>\# 服务的唯一编号
+
+server-id= 1
+
+\# 开启mysql binlog功能
+
+log-bin= mysql-bin
+
+\# binlog记录内容的方式，记录被操作的每一行
+
+binlog_format= ROW
+
+\# 减少记录日志的内容，只记录受影响的列
+
+binlog_row_image= minimal
+
+\# 指定需要复制的数据库名为zhognnan,主库从库必须一样
+
+binlog-do-db= zhognnan
+</code></pre>
+<p><em>(2)修改好配置文件，重启mysql服务</em></p>
+<pre><code>servicemysql restart
+
+or
+
+service mysql restart
+</code></pre>
+<p><em>(3)创建从库同步数据的账号</em></p>
+<p>登录mysql客户端：</p>
+<pre><code>./mysql -u root –ppassword
+</code></pre>
+<p>然后添加一个用户【用于在从库主机中登录进行同步】:</p>
+<pre><code>create user 'replicate'@'%' identified by 'replicate';
+</code></pre>
+<p>再对该用户授予复制权限：</p>
+<pre><code>grant replication slave on *.* to 'replicate'@'%';
+</code></pre>
+<p>使执行生效：</p>
+<pre><code>flush privileges;
+</code></pre>
+<figure data-type="image" tabindex="2"><img src="C:%5CUsers%5Cxforce%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220107143810096.png" alt="image-20220107143810096" loading="lazy"></figure>
+<p><em>(4)查看一下主库的状态</em></p>
+<pre><code>show master status\G;
+</code></pre>
+<figure data-type="image" tabindex="3"><img src="C:%5CUsers%5Cxforce%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220107143849983.png" alt="image-20220107143849983" loading="lazy"></figure>
+<p>需要注意的是：如果没有上面第3步操作，执行show master status \G;会报错</p>
+<p>file：表示同步的bin-log信息从哪个文件开始；</p>
+<p>position：表示从file的哪个位置开始；</p>
+<p>binlog_do_db：表示同步哪一个库</p>
+<p>在后面的slave配置中，这三个结果都需要使用到。</p>
+<p><strong>4.Slave(52)节点配置</strong></p>
+<p>配置从库</p>
+<p><em>(1)修改my.cnf文件，在[mysqld]加入下面的内容：</em></p>
+<pre><code>\# 服务的唯一编号
+
+server-id= 2
+
+\# 开启mysql binlog功能
+
+log-bin= mysql-bin
+
+\# binlog记录内容的方式，记录被操作的每一行
+
+binlog_format= ROW
+
+\# 减少记录日志的内容，只记录受影响的列
+
+binlog_row_image= minimal
+
+\# 指定需要复制的数据库名为zhongnan
+
+replicate-do-db= zhongnan
+</code></pre>
+<p><em>(2)修改好配置文件，重启mysql服务</em></p>
+<pre><code>servicemysql restart
+
+or
+
+service mysql restart
+</code></pre>
+<p><em>(3)执行同步命令</em></p>
+<p>登录mysql客户端：</p>
+<pre><code>./mysql -u root –ppassword
+</code></pre>
+<p>给从设置主服务器ip，同步账号密码，同步位置</p>
+<pre><code>change master to master_host='172.10.14.51',master_port=3306,master_user='replicate',master_password='replicate',master_log_file='mysql-bin.000001',master_log_pos=749;
+</code></pre>
+<p>命令需要特别注意：master_log_file 和master_log_pos 2个属性内容，这2个属性是刚才主服务器上执行show master status\G;查询出来的内容。</p>
+<figure data-type="image" tabindex="4"><img src="C:%5CUsers%5Cxforce%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220107143849983.png" alt="image-20220107143849983" loading="lazy"></figure>
+<p>(3) 开启从机角色的</p>
+<pre><code>start slave;
+</code></pre>
+<figure data-type="image" tabindex="5"><img src="C:%5CUsers%5Cxforce%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220107144303006.png" alt="image-20220107144303006" loading="lazy"></figure>
+<p>(4)查看从库的状态</p>
+<pre><code>show slave status\G;
+</code></pre>
+<p>返回信息为</p>
+<figure data-type="image" tabindex="6"><img src="C:%5CUsers%5Cxforce%5CAppData%5CRoaming%5CTypora%5Ctypora-user-images%5Cimage-20220107144343450.png" alt="image-20220107144343450" loading="lazy"></figure>
+<p>当：Slave_IO_Running和Slave_SQL_Running的状态都为Yes时，说明从库配置成功。</p>
+<p>4.测试验证</p>
+<p>在主库中创建数据库和表,发现数据已经进行了同步。</p>
+<p>至此，mysql的主备已经搭建完毕。</p>
+<p><strong>6、扩展</strong></p>
+<p>问题1：上述介绍的是备份某个库的操作，如果需要备份多个库则直接在master的my.cnf中添加新的一行binlog-do-db=test_2等等即可。这行代码的意思是指：同步该库（test_2）的bin-log信息。</p>
+<p>问题2：这种直接修改master节点的my.cnf文件去同步某个库，需要重启master才能让整个mysql集群工作，有没有一种方法可以搭建备库，但是不需要重启master？</p>
+<p>显然是可以的，不过这次备份的库是master的全部库了（因为没有指定具体库的bin-log）， 所以默认就把全部的bin-log都同步了。可以参考如下的步骤：</p>
+<p>step 1：导出Master节点中所有的数据库</p>
+<p>mysqldump -uroot -A --routines --single-transaction --master-data=2 &gt; /data1/mysqldump/alldatabases.sql</p>
+<p>参数注释：</p>
+<p>-A：导出所有库的数据</p>
+<p>--routines Dump stored routines (procedures and functions) from dumped databases</p>
+<p>--single-transaction Issue a BEGIN SQL statement before dumping data from server</p>
+<p>--master-data Write the binary log file name and position to the output</p>
+<p>这里添加option：--master-data之后，就可以不再使用show master status\G;去查看bin-log的file和position了。</p>
+<p>step 2：</p>
+<p>将上述的sql文件导入到备库中。</p>
+<p>step 3：</p>
+<p>其余步骤同上述内容【在master上创建一个用户，并授权，然后刷新】；在slave上执行change操作。</p>
+]]></content>
+    </entry>
     <entry>
         <title type="html"><![CDATA[测试]]></title>
         <id>https://CaoCan888.github.io/post/ce-shi/</id>
